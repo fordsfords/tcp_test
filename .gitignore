@@ -8,9 +8,7 @@ tmp.*
 ~*
 .DS_Store
 
-# Executable
-tcp_send
-tcp_rcv
+# Executable (include them for this repo)
 
 # Prerequisites
 *.d
@@ -42,8 +40,7 @@ tcp_rcv
 *.so.*
 *.dylib
 
-# Executables
-*.exe
+# Executables (include .exe for this repo)
 *.out
 *.app
 *.i*86

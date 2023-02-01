@@ -3,7 +3,7 @@
  * See https://github.com/fordsfords/tcp_test
  */
 /*
-# This code and its documentation is Copyright 2002-2021 Steven Ford
+# This code and its documentation is Copyright 2022-2023 Steven Ford
 # and licensed "public domain" style under Creative Commons "CC0":
 #   http://creativecommons.org/publicdomain/zero/1.0/
 # To the extent possible under law, the contributors to this project have
@@ -14,6 +14,7 @@
 */
 
 #include "cprt.h"
+#include "tcp_utils.h"
 
 #include <stdio.h>
 #include <ctype.h>
@@ -24,11 +25,11 @@
 
 /* Options and their defaults */
 char *o_ip = NULL;
+int o_keepalive = 0;
 int o_port = 0;
-int o_testnum = 0;
 
 
-char usage_str[] = "Usage: cprt_test [-h] [-t testnum] [unused_arg]";
+char usage_str[] = "Usage: cprt_test [-h] [-i ip] [-k keepalive] [-p port]";
 
 void usage(char *msg) {
   if (msg) fprintf(stderr, "%s\n", msg);
@@ -39,10 +40,10 @@ void usage(char *msg) {
 void help() {
   fprintf(stderr, "%s\n", usage_str);
   fprintf(stderr, "where:\n"
-      "  -h : print help\n"
-      "  -i ip : IP address to connect to (client)\n"
-      "  -t testnum : run specified test\n"
-      "  unused_arg : optional argument printed in test 10 (if supplied)\n");
+      "  -h : print help.\n"
+      "  -i ip : IP address to connect to (sets client mode).\n"
+      "  -k keepalive : Seconds between TCP keepalive probes (0=none).\n"
+      "  -p port : listener port.\n");
   exit(0);
 }
 
@@ -50,7 +51,7 @@ void get_opts(int argc, char **argv)
 {
   int opt;
 
-  while ((opt = cprt_getopt(argc, argv, "hci:p:t:")) != EOF) {
+  while ((opt = cprt_getopt(argc, argv, "hi:k:p:")) != EOF) {
     switch (opt) {
       case 'h':
         help();
@@ -60,33 +61,37 @@ void get_opts(int argc, char **argv)
         o_ip = CPRT_STRDUP(cprt_optarg);
         CPRT_ENULL(o_ip);
         break;
+      case 'k':
+        CPRT_ATOI(cprt_optarg, o_keepalive);
+        break;
       case 'p':
         CPRT_ATOI(cprt_optarg, o_port);
-        break;
-      case 't':
-        CPRT_ATOI(cprt_optarg, o_testnum);
         break;
       case '?':
         fprintf(stderr, "cprt_optopt='%c', Use '-h' for help\n", cprt_optopt);
         exit(1);
         break;
       default:
-        fprintf(stderr, "Undefined option '%c'\n", opt);
-        exit(1);
+        fprintf(stderr, "Undefined option '%c' (use -h for help)\n", opt); exit(1);
     }  /* switch opt */
   }  /* while cprt_getopt */
+
+  if (o_port == 0) { fprintf(stderr, "Must supply port (use -h for help)\n"); exit(1); }
 }  /* get_opts */
 
 
-void tcp_send()
+void tcp_rcv()
 {
+  CPRT_SOCKET listen_sock;
   CPRT_SOCKET sock;
-
+  long actual;
+  int retries;
+  long total_rcv;
+  char rcv_buffer[1024];
 
   CPRT_EM1(sock = socket(PF_INET, SOCK_STREAM, IPPROTO_TCP));
 
-  if (o_ip != NULL) {
-    /* Client, connect to IP. */
+  if (o_ip != NULL) { /* Client, connect to IP. */
     struct sockaddr_in saddr;
     memset(&saddr, 0, sizeof(saddr));
     saddr.sin_family = AF_INET;
@@ -94,8 +99,56 @@ void tcp_send()
     saddr.sin_port = htons(o_port);
     CPRT_EM1(connect(sock, (struct sockaddr *)&saddr, sizeof(saddr)));
   }
+  else {  /* Server, listen for connection. */
+    listen_sock = sock;
+    struct sockaddr_in saddr;
+    socklen_t saddr_len = sizeof(saddr);
 
-}  /* tcp_send */
+    memset(&saddr, 0, sizeof(saddr));
+    saddr.sin_family = AF_INET;
+    saddr.sin_addr.s_addr = htonl(INADDR_ANY);
+    saddr.sin_port = htons(o_port);
+    CPRT_EOK0(bind(listen_sock, (struct sockaddr *)&saddr, sizeof(saddr)));
+    CPRT_EOK0(listen(listen_sock, 5));
+
+    retries = 5;
+    sock = -1;
+    while (sock == -1) {
+      sock = accept(listen_sock, (struct sockaddr *)&saddr, &saddr_len);
+      if (sock == -1) {
+        CPRT_PERRNO("accept returned -1: ");
+      }
+      retries--;
+      CPRT_EM1(retries);
+    }  /* while */
+  }  /* Server. */
+
+  /* If wanted, turn on TCP keepalive. */
+  if (o_keepalive > 0) {
+    tcp_keepalive(sock, o_keepalive);
+  }
+
+  printf("Receive loop\n");
+  total_rcv = 0;
+  do {
+    CPRT_EM1(actual = recv(sock, rcv_buffer, 1, 0));
+    if (actual == 0) {
+      fprintf(stderr, "\nActual=0\n");
+    } else {
+      if (rcv_buffer[0] == '\n') {
+        printf("."); fflush(stdout);
+      }
+    }
+    total_rcv += actual;
+  } while (actual > 0);
+  printf("Received %ld bytes\n", total_rcv);
+
+  CPRT_SOCKET_CLOSE(sock);
+
+  if (o_ip == NULL) { /* Server, have listening socket. */
+    CPRT_SOCKET_CLOSE(listen_sock);
+  }
+}  /* tcp_rcv */
 
 
 int main(int argc, char **argv)
@@ -104,18 +157,7 @@ int main(int argc, char **argv)
 
   get_opts(argc, argv);
 
-  CPRT_INITTIME();
-
-  switch(o_testnum) {
-    case 0:
-      fprintf(stderr, "test %d: GETOPT_PORT, CPRT_NET_START\n", o_testnum);
-      fflush(stderr);
-      tcp_send();
-      break;
-    default:
-      fprintf(stderr, "test %d: no such test\n", o_testnum);
-  }  /* switch o_testnum */
-
+  tcp_rcv();
 
   CPRT_NET_CLEANUP;
   return 0;

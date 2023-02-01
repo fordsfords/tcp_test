@@ -7,7 +7,41 @@ TCP server and client portable across Mac, Linux, Windows.
 
 # INTRODUCTION
 
-# License
+This package is for misc TCP test tools. Over time, it may become quite a hodge-podge.
+At the present time, it is only for testing TCP's keepalive feature.
+
+# TIPS
+
+Some tips to remind myself how I develop this.
+I have a Windows laptop, but I do most of my work on Linux.
+I use WSL2 on Windows to do the Linux side,
+and Visual Studio 2022 on the Windows side.
+
+From Unix shell window:
+````
+$ ./bld.sh
+$ cp *.* /mnt/c/Users/sford/tstvs/tcp_test/
+````
+
+From Windows command prompt:
+````
+> cd \Users\sford\tstvs\tcp_test
+> tcp_send.vcxproj
+````
+This brings up visual studio. Build both tools.
+
+From Unix shell window:
+````
+$ cp /mnt/c/Users/sford/tstvs/tcp_test/*.sln /mnt/c/Users/sford/tstvs/tcp_test/*.vcxproj .
+$ cp /mnt/c/Users/sford/tstvs/tcp_test/x64/Debug/*.exe bin/Windows/
+$ git add .
+$ git status
+$ git commit -m "commit message"
+$ git push
+````
+
+
+# LICENSE
 
 I want there to be NO barriers to using this code, so I am releasing it to the public domain.  But "public domain" does not have an internationally agreed upon definition, so I use CC0:
 

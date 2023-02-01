@@ -125,7 +125,7 @@ char *cprt_strerror(int errnum, char *buffer, size_t buf_sz)
 }  /* cprt_strerror */
 
 
-void cprt_perrno(char *in_str)
+void cprt_perrno(char *in_str, char *file, int line)
 {
 #if defined(_WIN32)
   DWORD my_errno = errno;
@@ -133,7 +133,7 @@ void cprt_perrno(char *in_str)
     char my_errstr[1024];
     cprt_strerror(my_errno, my_errstr, sizeof(my_errstr));
     fprintf(stderr, "ERROR (%s:%d): %s: errno=%u: '%s'\n",
-        CPRT_BASENAME(__FILE__), __LINE__, in_str,
+        CPRT_BASENAME(file), line, in_str,
         my_errno, my_errstr);
   }
   else {
@@ -145,24 +145,24 @@ void cprt_perrno(char *in_str)
         NULL, my_errno, MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT), (LPSTR)&rtn_msg, 0, NULL);
     if (err > 0) { /* If format worked */
       fprintf(stderr, "ERROR (%s:%d): %s: WSAGetLastError=%d: %s",
-          CPRT_BASENAME(__FILE__), __LINE__, in_str, my_errno, rtn_msg);
+          CPRT_BASENAME(file), line, in_str, my_errno, rtn_msg);
       LocalFree(rtn_msg);
     }
     else {
       fprintf(stderr, "ERROR (%s:%d): %s: WSAGetLastError=%d (no description)\n",
-          CPRT_BASENAME(__FILE__), __LINE__, in_str, my_errno);
+          CPRT_BASENAME(file), line, in_str, my_errno);
     }
   }
   fflush(stderr);
 
 #else  /* Unix. */
-  char my_errno = errno; \
-  char my_errstr[1024]; \
-  cprt_strerror(my_errno, my_errstr, sizeof(my_errstr)); \
-  fprintf(stderr, "ERROR (%s:%d): %s: errno=%u: %s\n", \
-      CPRT_BASENAME(__FILE__), __LINE__, in_str, \
-      my_errno, my_errstr); \
-  fflush(stderr); \
+  char my_errno = errno;
+  char my_errstr[1024];
+  cprt_strerror(my_errno, my_errstr, sizeof(my_errstr));
+  fprintf(stderr, "ERROR (%s:%d): %s: errno=%u: %s\n",
+      CPRT_BASENAME(file), line, in_str,
+      my_errno, my_errstr);
+  fflush(stderr);
 
 #endif
 }  /* cprt_perrno */
