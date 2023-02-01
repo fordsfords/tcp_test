@@ -100,9 +100,9 @@ void tcp_rcv()
     CPRT_EM1(connect(sock, (struct sockaddr *)&saddr, sizeof(saddr)));
   }
   else {  /* Server, listen for connection. */
-    listen_sock = sock;
     struct sockaddr_in saddr;
     socklen_t saddr_len = sizeof(saddr);
+    listen_sock = sock;
 
     memset(&saddr, 0, sizeof(saddr));
     saddr.sin_family = AF_INET;
