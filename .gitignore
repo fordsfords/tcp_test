@@ -7,6 +7,9 @@ tmp.*
 *.tmp[0-9]
 ~*
 .DS_Store
+*.vcxproj.user
+*.sdf
+*.suo
 
 # Executable (include them for this repo)
 

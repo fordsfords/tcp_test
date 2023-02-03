@@ -29,7 +29,7 @@ int o_keepalive = 0;
 int o_port = 0;
 
 
-char usage_str[] = "Usage: cprt_test [-h] [-i ip] [-k keepalive] [-p port]";
+char usage_str[] = "Usage: tcp_rcv [-h] [-i ip] [-k keepalive] [-p port]";
 
 void usage(char *msg) {
   if (msg) fprintf(stderr, "%s\n", msg);

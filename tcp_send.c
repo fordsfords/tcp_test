@@ -32,7 +32,7 @@ int o_port = 0;
 int o_sleeptime = 0;
 
 
-char usage_str[] = "Usage: cprt_test [-h] [-i ip] [-k keepalive] [-l lingertime] [-n num_msgs] [-p port] [-s sleeptime]";
+char usage_str[] = "Usage: tcp_send [-h] [-i ip] [-k keepalive] [-l lingertime] [-n num_msgs] [-p port] [-s sleeptime]";
 
 void usage(char *msg) {
   if (msg) fprintf(stderr, "%s\n", msg);
