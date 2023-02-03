@@ -8,8 +8,36 @@ TCP server and client portable across Mac, Linux, Windows.
 
 # INTRODUCTION
 
-This package is for misc TCP test tools. Over time, it may become quite a hodge-podge.
-At the present time, it is only for testing TCP's keepalive feature.
+This repository is for misc TCP test tools.
+At the present time, it is primarily for testing TCP's keepalive feature.
+
+The approach is simple:
+* Two programs, "tcp_send" and "tcp_rcv".
+* Either one can function as a server or client.
+The client initiates a connection to the server.
+* Either or both can enable TCP keepalives.
+* The sender waits for the connetion to be established.
+* The sender does the following:
+````
+1. Send first message.
+2. Pause for "sleeptime" seconds (usually many minutes).
+3. Send a specified number of additional messages, one per second.
+````
+
+During the step 2's sleep,
+the connection can be examined using a packet capture tool (like Wireshark)
+to verify the presence or absense of keepalives.
+
+# STATEFUL ROUTER TIMING OUT IDLE CONNECTIONS
+
+A good use case for these tools are to determine if an intervening
+router between two hosts is maintaining state for TCP connections,
+and if so, if it fimes out idle connections.
+
+This is common for routers that implment
+[NAT (Network Address Translation)](https://en.wikipedia.org/wiki/Network_address_translation).
+TCP connections consume router resources and must be cleaned up
+to prevent resource exhaustion.
 
 
 # HELP
@@ -56,32 +84,24 @@ These steps probably won't work for anybody but me.
 If anybody has a better workflow for a small multi-platform project,
 I would love to learn about it.
 
-From Unix shell window, build Unix:
+To build:
 ````
 $ ./bld.sh
 ````
 
-From Unix shell window, start process of building Windows:
-````
-$ cp *.* /mnt/c/Users/sford/tstvs/tcp_test/
-````
+After compiling the Linux executables into the bin/Linux directory,
+bld.sh copies the files to the Windows partition to a directory
+where I do Windows builds.
+The "bld.sh" script then prints some instructions and
+waits for you to hit return.
+Those instructions tell how to launch Visual Studio
+and build the programs.
 
-From Windows command prompt:
-````
-> cd \Users\sford\tstvs\tcp_test
-> tcp_test.sln
-````
-This brings up visual studio.
-* Change "Debug" to "Release", change "Win32" to "x64".
-* Right-click solution, clean.
-* Right-click "tcp_rcv", "build" (not "rebuild").
-* Right-click "tcp_send", "build" (not "rebuild").
-* Exit Visual Studio
+After hitting return, the executables are copied
+to the bin/Windows directory.
 
-From Unix shell window:
+To check in:
 ````
-$ cp /mnt/c/Users/sford/tstvs/tcp_test/*.sln /mnt/c/Users/sford/tstvs/tcp_test/*.vcxproj .
-$ cp /mnt/c/Users/sford/tstvs/tcp_test/x64/Release/*.exe bin/Windows/
 $ git add .
 $ git status
 $ git commit -m "commit message"
