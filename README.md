@@ -20,7 +20,7 @@ The client initiates a connection to the server.
 * The sender does the following:
 ````
 1. Send first message.
-2. Pause for "sleeptime" seconds (usually many minutes).
+2. Pause for "-s sleeptime" seconds (usually many minutes).
 3. Send a specified number of additional messages, one per second.
 ````
 
