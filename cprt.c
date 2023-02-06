@@ -31,6 +31,7 @@ LARGE_INTEGER cprt_frequency;
 LARGE_INTEGER cprt_start_time;
 #endif
 
+extern FILE *outfile_fp;
 
 #if defined(_WIN32)
 int cprt_timeofday(struct cprt_timeval *tv, void *unused_tz)
@@ -135,6 +136,9 @@ void cprt_perrno(char *in_str, char *file, int line)
     fprintf(stderr, "ERROR (%s:%d): %s: errno=%u: '%s'\n",
         CPRT_BASENAME(file), line, in_str,
         my_errno, my_errstr);
+    if (outfile_fp) { fprintf(outfile_fp, "ERROR (%s:%d): %s: errno=%u: '%s'\n",
+        CPRT_BASENAME(file), line, in_str,
+        my_errno, my_errstr);  fflush(outfile_fp); }
   }
   else {
     char *rtn_msg;
@@ -146,11 +150,15 @@ void cprt_perrno(char *in_str, char *file, int line)
     if (err > 0) { /* If format worked */
       fprintf(stderr, "ERROR (%s:%d): %s: WSAGetLastError=%d: %s",
           CPRT_BASENAME(file), line, in_str, my_errno, rtn_msg);
+      if (outfile_fp) { fprintf(outfile_fp, "ERROR (%s:%d): %s: WSAGetLastError=%d: %s",
+          CPRT_BASENAME(file), line, in_str, my_errno, rtn_msg);  fflush(outfile_fp); }
       LocalFree(rtn_msg);
     }
     else {
       fprintf(stderr, "ERROR (%s:%d): %s: WSAGetLastError=%d (no description)\n",
           CPRT_BASENAME(file), line, in_str, my_errno);
+      if (outfile_fp) { fprintf(outfile_fp, "ERROR (%s:%d): %s: WSAGetLastError=%d (no description)\n",
+          CPRT_BASENAME(file), line, in_str, my_errno);  fflush(outfile_fp); }
     }
   }
   fflush(stderr);
@@ -163,6 +171,9 @@ void cprt_perrno(char *in_str, char *file, int line)
       CPRT_BASENAME(file), line, in_str,
       my_errno, my_errstr);
   fflush(stderr);
+  if (outfile_fp) { fprintf(outfile_fp, "ERROR (%s:%d): %s: errno=%u: %s\n",
+      CPRT_BASENAME(file), line, in_str,
+      my_errno, my_errstr);  fflush(outfile_fp); }
 
 #endif
 }  /* cprt_perrno */

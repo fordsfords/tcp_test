@@ -26,10 +26,14 @@
 /* Options and their defaults */
 char *o_ip = NULL;
 int o_keepalive = 0;
+char *o_outfile = NULL;
 int o_port = 0;
 
 
-char usage_str[] = "Usage: tcp_rcv [-h] [-i ip] [-k keepalive] [-p port]";
+FILE *outfile_fp = NULL;
+
+
+char usage_str[] = "Usage: tcp_rcv [-h] [-i ip] [-k keepalive] [-o outfile] [-p port]";
 
 void usage(char *msg) {
   if (msg) fprintf(stderr, "%s\n", msg);
@@ -39,11 +43,12 @@ void usage(char *msg) {
 
 void help() {
   fprintf(stderr, "%s\n", usage_str);
-  fprintf(stderr, "where:\n"
-      "  -h : print help.\n"
+  fprintf(stderr, "Where:\n"
+      "  -h : Print help.\n"
       "  -i ip : IP address to connect to (sets client mode).\n"
       "  -k keepalive : Seconds between TCP keepalive probes (0=none).\n"
-      "  -p port : listener port.\n");
+      "  -o outfile : Program output will be written to screen and this file.\n"
+      "  -p port : Listener port.\n");
   exit(0);
 }
 
@@ -51,18 +56,21 @@ void get_opts(int argc, char **argv)
 {
   int opt;
 
-  while ((opt = cprt_getopt(argc, argv, "hi:k:p:")) != EOF) {
+  while ((opt = cprt_getopt(argc, argv, "hi:k:o:p:")) != EOF) {
     switch (opt) {
       case 'h':
         help();
         break;
       case 'i':
         if (o_ip != NULL) { free(o_ip); }
-        o_ip = CPRT_STRDUP(cprt_optarg);
-        CPRT_ENULL(o_ip);
+        CPRT_ENULL(o_ip = CPRT_STRDUP(cprt_optarg));
         break;
       case 'k':
         CPRT_ATOI(cprt_optarg, o_keepalive);
+        break;
+      case 'o':
+        if (o_outfile != NULL) { free(o_outfile); }
+        CPRT_ENULL(o_outfile = CPRT_STRDUP(cprt_optarg));
         break;
       case 'p':
         CPRT_ATOI(cprt_optarg, o_port);
@@ -77,6 +85,9 @@ void get_opts(int argc, char **argv)
   }  /* while cprt_getopt */
 
   if (o_port == 0) { fprintf(stderr, "Must supply port (use -h for help)\n"); exit(1); }
+  if (o_outfile != NULL) {
+    CPRT_ENULL(outfile_fp = fopen(o_outfile, "w"));
+  }
 }  /* get_opts */
 
 
@@ -128,20 +139,20 @@ void tcp_rcv()
     tcp_keepalive(sock, o_keepalive);
   }
 
-  printf("Receive loop\n");
+  printf("Receive loop\n");  if (outfile_fp) { fprintf(outfile_fp, "Receive loop\n");  fflush(outfile_fp); }
   total_rcv = 0;
   do {
     CPRT_EM1(actual = recv(sock, rcv_buffer, 1, 0));
     if (actual == 0) {
-      fprintf(stderr, "\nActual=0\n");
+      printf("\nActual=0\n");  if (outfile_fp) { fprintf(outfile_fp, "\nActual=0\n");  fflush(outfile_fp); }
     } else {
       if (rcv_buffer[0] == '\n') {
-        printf("."); fflush(stdout);
+        printf(".");  fflush(stdout);  if (outfile_fp) { fprintf(outfile_fp, ".");  fflush(outfile_fp); }
       }
     }
     total_rcv += actual;
   } while (actual > 0);
-  printf("Received %ld bytes\n", total_rcv);
+  printf("Received %ld bytes\n", total_rcv);  if (outfile_fp) { fprintf(outfile_fp, "Received %ld bytes\n", total_rcv);  fflush(outfile_fp); }
 
   CPRT_SOCKET_CLOSE(sock);
 
