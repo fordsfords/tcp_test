@@ -88,6 +88,8 @@ void get_opts(int argc, char **argv)
   if (o_outfile != NULL) {
     CPRT_ENULL(outfile_fp = fopen(o_outfile, "w"));
   }
+
+  printf("Build %s %s; equiv command line: tcp_rcv  -i %s -k %d -o %s -p %d\n", __DATE__, __TIME__, o_ip?o_ip:"(null)", o_keepalive, o_outfile?o_outfile:"(null)", o_port);  if (outfile_fp) { fprintf(outfile_fp, "Build %s %s; equiv command line: tcp_rcv  -i %s -k %d -o %s -p %d\n", __DATE__, __TIME__, o_ip?o_ip:"(null)", o_keepalive, o_outfile?o_outfile:"(null)", o_port);  fflush(outfile_fp); }
 }  /* get_opts */
 
 

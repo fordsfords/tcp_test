@@ -104,6 +104,8 @@ void get_opts(int argc, char **argv)
   if (o_outfile != NULL) {
     CPRT_ENULL(outfile_fp = fopen(o_outfile, "w"));
   }
+
+  printf("Build %s %s; equiv command line: tcp_send  -i %s -k %d -l %d -n %d -o %s -p %d -s %d\n", __DATE__, __TIME__, o_ip?o_ip:"(null)", o_keepalive, o_lingertime, o_num_msgs, o_outfile?o_outfile:"(null)", o_port, o_sleeptime);  if (outfile_fp) { fprintf(outfile_fp, "Build %s %s; equiv command line: tcp_send  -i %s -k %d -l %d -n %d -o %s -p %d -s %d\n", __DATE__, __TIME__, o_ip?o_ip:"(null)", o_keepalive, o_lingertime, o_num_msgs, o_outfile?o_outfile:"(null)", o_port, o_sleeptime);  fflush(outfile_fp); }
 }  /* get_opts */
 
 
