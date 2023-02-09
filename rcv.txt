@@ -1,7 +1,0 @@
-Build: Feb  8 2023 14:00:53, run: 2023/02/08 14:02:40.457714; equiv command line: bin/Linux/tcp_rcv  -i "" -k 0 -o rcv.txt -p 12000
-connection accepted
-Receive loop:
-Build: Feb  8 2023 14:00:53, run: 2023/02/08 14:03:04.922304; equiv command line: bin/Linux/tcp_send  -i 127.0.0.1 -k 0 -l 0 -n 0 -o "" -p 12000 -s 0
-
-Actual=0
-Received 150 bytes
