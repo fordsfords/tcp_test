@@ -10,6 +10,7 @@ tmp.*
 *.vcxproj.user
 *.sdf
 *.suo
+*.txt
 
 # Executable (include them for this repo)
 
