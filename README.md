@@ -39,6 +39,35 @@ This is common for routers that implment
 TCP connections consume router resources and must be cleaned up
 to prevent resource exhaustion.
 
+Here's a test to see if the router between two hosts is timing out connetions:
+
+Host1 (ip address 10.29.3.10):
+````
+tcp_rcv -p 12000 -o rcv.txt
+````
+
+Host2:
+````
+tcp_send -p 12000 -i 10.29.3.10 -n 2000 -s 3600 -o send.txt
+````
+
+The "-s 3600" causes tcp_send to sleep for 3600 seconds (1 hour) after sending the
+first message.
+After that, it sends 2000 messages at a rate of 1 message per second.
+If the router between the hosts maintains TCP connection state and has timed
+out the idle connection during the 1 hour sleep,
+you will see the tcp_send start sending again, but the tcp_rcv will not
+receive any messages.
+The tcp_send tool will continue writing messages to its socket for about 16 minutes
+(900+ messages), and then time out the connection.
+
+On the other hand, if the router does not time out the connection,
+the tcp_rcv sill get the messages sent after the 1-hour sleep.
+
+To verify that it is related to lack of traffic on the connection,
+repeat the test adding "-k 10" to both commands.
+This ensures that during idle periods,
+TCP keepalive packets will be sent every 10 seconds.
 
 # HELP
 
@@ -50,6 +79,7 @@ where:
   -k keepalive : Seconds between TCP keepalive probes (0=none).
   -l lingertime : Seconds to sleep (after last send) before shutting down.
   -n num_msgs : number of hello world messagse to send.
+  -o outfile : Program output will be written to screen and this file.
   -p port : listener port.
   -s sleeptime : Seconds to sleep after first message.
 ````
@@ -66,6 +96,7 @@ where:
   -h : print help.
   -i ip : IP address to connect to (sets client mode).
   -k keepalive : Seconds between TCP keepalive probes (0=none).
+  -o outfile : Program output will be written to screen and this file.
   -p port : listener port.
 ````
 

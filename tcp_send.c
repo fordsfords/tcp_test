@@ -24,16 +24,17 @@
 
 
 /* Options and their defaults */
-char *o_ip = NULL;
+char *o_ip = NULL;  /* Default is set in get_opts(). */
 int o_keepalive = 0;
 int o_lingertime = 0;
 int o_num_msgs = 0;
-char *o_outfile = NULL;
+char *o_outfile = NULL;  /* Default is set in get_opts(). */
 int o_port = 0;
 int o_sleeptime = 0;
 
 
 FILE *outfile_fp = NULL;
+char id_line[2000];
 
 
 char usage_str[] = "Usage: tcp_send [-h] [-i ip] [-k keepalive] [-l lingertime] [-n num_msgs] [-o outfile] [-p port] [-s sleeptime]";
@@ -51,7 +52,7 @@ void help() {
       "  -i ip : IP address to connect to (sets client mode).\n"
       "  -k keepalive : Seconds between TCP keepalive probes (0=none).\n"
       "  -l lingertime : Seconds to sleep (after last send) before shutting down.\n"
-      "  -n num_msgs : number of hello world messagse to send.\n"
+      "  -n num_msgs : number of hello world messages to send.\n"
       "  -o outfile : Program output will be written to screen and this file.\n"
       "  -p port : listener port.\n"
       "  -s sleeptime : Seconds to sleep after first message.\n");
@@ -61,6 +62,13 @@ void help() {
 void get_opts(int argc, char **argv)
 {
   int opt;
+  struct cprt_timeval tv;
+  struct tm out_tm;
+  char run_time[80];
+
+  /* Defaults */
+  o_ip = CPRT_STRDUP("");
+  o_outfile = CPRT_STRDUP("");
 
   while ((opt = cprt_getopt(argc, argv, "hi:k:l:n:o:p:s:")) != EOF) {
     switch (opt) {
@@ -68,9 +76,8 @@ void get_opts(int argc, char **argv)
         help();
         break;
       case 'i':
-        if (o_ip != NULL) { free(o_ip); }
-        o_ip = CPRT_STRDUP(cprt_optarg);
-        CPRT_ENULL(o_ip);
+        free(o_ip);
+        CPRT_ENULL(o_ip = CPRT_STRDUP(cprt_optarg));
         break;
       case 'k':
         CPRT_ATOI(cprt_optarg, o_keepalive);
@@ -82,7 +89,7 @@ void get_opts(int argc, char **argv)
         CPRT_ATOI(cprt_optarg, o_num_msgs);
         break;
       case 'o':
-        if (o_outfile != NULL) { free(o_outfile); }
+        free(o_outfile);
         CPRT_ENULL(o_outfile = CPRT_STRDUP(cprt_optarg));
         break;
       case 'p':
@@ -92,7 +99,7 @@ void get_opts(int argc, char **argv)
         CPRT_ATOI(cprt_optarg, o_sleeptime);
         break;
       case '?':
-        fprintf(stderr, "cprt_optopt='%c', Use '-h' for help\n", cprt_optopt);
+        fprintf(stderr, "cprt_optopt='%c' (use '-h' for help)\n", cprt_optopt);
         exit(1);
         break;
       default:
@@ -101,11 +108,19 @@ void get_opts(int argc, char **argv)
   }  /* while cprt_getopt */
 
   if (o_port == 0) { fprintf(stderr, "Must supply port (use -h for help)\n"); exit(1); }
-  if (o_outfile != NULL) {
+  if (strlen(o_outfile) > 0) {
     CPRT_ENULL(outfile_fp = fopen(o_outfile, "w"));
   }
 
-  printf("Build %s %s; equiv command line: tcp_send  -i %s -k %d -l %d -n %d -o %s -p %d -s %d\n", __DATE__, __TIME__, o_ip?o_ip:"(null)", o_keepalive, o_lingertime, o_num_msgs, o_outfile?o_outfile:"(null)", o_port, o_sleeptime);  if (outfile_fp) { fprintf(outfile_fp, "Build %s %s; equiv command line: tcp_send  -i %s -k %d -l %d -n %d -o %s -p %d -s %d\n", __DATE__, __TIME__, o_ip?o_ip:"(null)", o_keepalive, o_lingertime, o_num_msgs, o_outfile?o_outfile:"(null)", o_port, o_sleeptime);  fflush(outfile_fp); }
+  /* Get timestamp. */
+  CPRT_EOK0(CPRT_TIMEOFDAY(&tv, NULL));  CPRT_LOCALTIME_R(&(tv.tv_sec), &out_tm);
+  CPRT_SNPRINTF(run_time, sizeof(run_time), "%04d/%02d/%02d %02d:%02d:%02d.%06d",
+      (int)out_tm.tm_year + 1900, (int)out_tm.tm_mon + 1, (int)out_tm.tm_mday,
+      (int)out_tm.tm_hour, (int)out_tm.tm_min, (int)out_tm.tm_sec, (int)tv.tv_usec);
+
+  CPRT_SNPRINTF(id_line, sizeof(id_line), "Build: %s %s, run: %s; equiv cmd: %s  -i %s -k %d -l %d -n %d -o %s -p %d -s %d\n",
+      __DATE__, __TIME__, run_time, argv[0], strlen(o_ip)?o_ip:"\"\"", o_keepalive, o_lingertime, o_num_msgs, strlen(o_outfile)?o_outfile:"\"\"", o_port, o_sleeptime);
+  printf("%s", id_line);  if (outfile_fp) { fprintf(outfile_fp, "%s", id_line);  fflush(outfile_fp); }
 }  /* get_opts */
 
 
@@ -120,7 +135,7 @@ void tcp_send()
 
   CPRT_EM1(sock = socket(PF_INET, SOCK_STREAM, IPPROTO_TCP));
 
-  if (o_ip != NULL) { /* Client, connect to IP. */
+  if (strlen(o_ip) > 0) { /* Client, connect to IP. */
     struct sockaddr_in saddr;
     memset(&saddr, 0, sizeof(saddr));
     saddr.sin_family = AF_INET;
@@ -158,8 +173,7 @@ void tcp_send()
   }
 
   printf("Send first\n");  if (outfile_fp) { fprintf(outfile_fp, "Send first\n");  fflush(outfile_fp); }
-  strncpy(send_buffer, "Hello word!\n", sizeof(send_buffer));
-  CPRT_EM1(actual = send(sock, send_buffer, (int)strlen(send_buffer), 0));
+  CPRT_EM1(actual = send(sock, id_line, (int)strlen(id_line), 0));
   if (actual != strlen(send_buffer)) { printf("send: strlen(send_buffer)=%ld, actual=%ld\n", (long)strlen(send_buffer), (long)actual); if (outfile_fp) { fprintf(outfile_fp, "send: strlen(send_buffer)=%ld, actual=%ld\n", (long)strlen(send_buffer), (long)actual);  fflush(outfile_fp); } }
 
   printf("sleep %d seconds\n", o_sleeptime); if (outfile_fp) { fprintf(outfile_fp, "sleep %d seconds\n", o_sleeptime);  fflush(outfile_fp); }
@@ -168,7 +182,7 @@ void tcp_send()
   if (o_num_msgs > 1) {
     printf("Sending more");  fflush(stdout); if (outfile_fp) { fprintf(outfile_fp, "Sending more");  fflush(outfile_fp); }
   }
-  /* Start with m=1 because the "Hello world" message was number 0. */
+  /* Start with m=1 because the "id_line" message was number 0. */
   for (m = 1; m < o_num_msgs; m++) {  /* Countdown messages. */
     printf(".");  fflush(stdout);  if (outfile_fp) { fprintf(outfile_fp, ".");  fflush(outfile_fp); }
 
@@ -181,7 +195,7 @@ void tcp_send()
     }
   }
 
-  printf("\nLinger before shutdown %d seconds\n", o_lingertime); if (outfile_fp) { fprintf(outfile_fp, "\nLinger before shutdown %d seconds\n", o_lingertime);  fflush(outfile_fp); }
+  printf("Linger before shutdown %d seconds\n", o_lingertime); if (outfile_fp) { fprintf(outfile_fp, "Linger before shutdown %d seconds\n", o_lingertime);  fflush(outfile_fp); }
   CPRT_SLEEP_SEC(o_lingertime);
 
   printf("Shutdown\n");  if (outfile_fp) { fprintf(outfile_fp, "Shutdown\n");  fflush(outfile_fp); }
@@ -196,7 +210,7 @@ void tcp_send()
   printf("Closing\n");  if (outfile_fp) { fprintf(outfile_fp, "Closing\n");  fflush(outfile_fp); }
   CPRT_SOCKET_CLOSE(sock);
 
-  if (o_ip == NULL) { /* Server, have listening socket. */
+  if (strlen(o_ip) == 0) { /* Server, have listening socket. */
     CPRT_SOCKET_CLOSE(listen_sock);
   }
 }  /* tcp_send */
