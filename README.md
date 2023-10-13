@@ -3,16 +3,16 @@ TCP server and client portable across Mac, Linux, and Windows.
 
 # Table of contents
 
-- [tcp_test](#tcp_test)
-- [Table of contents](#table-of-contents)
-- [INTRODUCTION](#introduction)
-- [STATEFUL ROUTER TIMING OUT IDLE CONNECTIONS](#stateful-router-timing-out-idle-connections)
-- [HELP](#help)
-- [TIPS](#tips)
-- [LICENSE](#license)
-
-<sup>(table of contents from https://luciopaiva.com/markdown-toc/)</sup>
-
+<!-- mdtoc-start -->
+&bull; [tcp_test](#tcp_test)  
+&bull; [Table of contents](#table-of-contents)  
+&bull; [INTRODUCTION](#introduction)  
+&bull; [STATEFUL ROUTER TIMING OUT IDLE CONNECTIONS](#stateful-router-timing-out-idle-connections)  
+&bull; [HELP](#help)  
+&bull; [TIPS](#tips)  
+&bull; [LICENSE](#license)  
+<!-- TOC created by '../mdtoc/mdtoc.pl README.md' (see https://github.com/fordsfords/mdtoc) -->
+<!-- mdtoc-end -->
 
 # INTRODUCTION
 
