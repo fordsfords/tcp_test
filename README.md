@@ -11,7 +11,7 @@ TCP server and client portable across Mac, Linux, and Windows.
 &bull; [HELP](#help)  
 &bull; [TIPS](#tips)  
 &bull; [LICENSE](#license)  
-<!-- TOC created by '../mdtoc/mdtoc.pl README.md' (see https://github.com/fordsfords/mdtoc) -->
+<!-- TOC created by '/home/sford/bin/mdtoc.pl README.md' (see https://github.com/fordsfords/mdtoc) -->
 <!-- mdtoc-end -->
 
 # INTRODUCTION
